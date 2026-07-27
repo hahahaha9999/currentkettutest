@@ -31,17 +31,17 @@ export default () => {
             />
             <FormInput
                 value={avatar}
-                placeholder="Avatar URL"
+                placeholder="Avatar Image URL"
                 onChange={(v: string) => { setAvatar(v); storage.spoofedAvatar = v; }}
             />
             <FormInput
                 value={decoAsset}
-                placeholder="Avatar Decoration Asset ID"
+                placeholder="Decoration Asset Hash"
                 onChange={(v: string) => { setDecoAsset(v); storage.spoofedDecoAsset = v; }}
             />
             <FormInput
                 value={decoSku}
-                placeholder="Avatar Decoration SKU ID"
+                placeholder="Decoration SKU ID"
                 onChange={(v: string) => { setDecoSku(v); storage.spoofedDecoSku = v; }}
             />
         </FormSection>
