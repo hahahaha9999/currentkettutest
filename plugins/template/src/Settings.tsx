@@ -1,9 +1,8 @@
-import { Forms, General } from "@vendetta/ui/components";
+import { Forms } from "@vendetta/ui/components";
 import { storage } from "@vendetta";
 import { React } from "@vendetta/metro/common";
 
 const { FormSection, FormInput } = Forms;
-const { Button } = General;
 
 export default () => {
     const [targetId, setTargetId] = React.useState(storage.targetMessageId ?? "");
@@ -11,21 +10,6 @@ export default () => {
     const [text, setText] = React.useState(storage.spoofedText ?? "");
     const [decoAsset, setDecoAsset] = React.useState(storage.spoofedDecoAsset ?? "");
     const [decoSku, setDecoSku] = React.useState(storage.spoofedDecoSku ?? "");
-
-    const handleClear = () => {
-        storage.targetMessageId = "";
-        storage.spoofedDisplayName = "";
-        storage.spoofedText = "";
-        storage.spoofedAvatar = "";
-        storage.spoofedDecoAsset = "";
-        storage.spoofedDecoSku = "";
-
-        setTargetId("");
-        setDisplayName("");
-        setText("");
-        setDecoAsset("");
-        setDecoSku("");
-    };
 
     return (
         <FormSection title="Spoof Settings">
@@ -54,13 +38,6 @@ export default () => {
                 placeholder="Avatar Decoration SKU ID"
                 onChange={(v: string) => { setDecoSku(v); storage.spoofedDecoSku = v; }}
             />
-            {Button && (
-                <Button
-                    text="Clear All Settings"
-                    color="red"
-                    onPress={handleClear}
-                />
-            )}
         </FormSection>
     );
 };
