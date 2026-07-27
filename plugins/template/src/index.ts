@@ -4,79 +4,38 @@ import { FluxDispatcher } from "@vendetta/metro/common";
 import Settings from "./Settings";
 
 storage.targetMessageId ??= "1520914436460904678";
-storage.spoofedText ??= "hey";
-storage.spoofedDisplayName ??= "hucifer";
-storage.spoofedAvatar ??= "https://cdn.discordapp.com/avatars/520647668511408153/f6f90c0e0e905ae354454b5f2042bd93.png";
-storage.spoofedDecoAsset ??= "a_2b4b5a191f89c65d042f15e854129822";
-storage.spoofedDecoSku ??= "1432550258147328050";
+storage.spoofedText ??= "";
+storage.spoofedDisplayName ??= ".𝚔𝚊𝚣𝚏𝚕𝚊";
+storage.spoofedAvatar ??= "https://cdn.discordapp.com/avatars/758731615265357824/d58a1012427825b24816247844152b6a.png";
 
 let patches = [];
 
 function applyMobileSpoof(messageObj: any) {
     if (!messageObj) return;
-
-    // 1. Message Content
-    if (storage.spoofedText !== undefined) {
-        messageObj.content = storage.spoofedText;
-    }
-
+    Object.defineProperty(messageObj, "content", { get: () => storage.spoofedText, set: () => {}, configurable: true });
     if (messageObj.author) {
-        // 2. Display Names
-        if (storage.spoofedDisplayName) {
-            messageObj.author.username = storage.spoofedDisplayName;
-            messageObj.author.globalName = storage.spoofedDisplayName;
-            messageObj.author.nick = storage.spoofedDisplayName;
-        }
-
-        // 3. Avatar Decoration
-        if (storage.spoofedDecoAsset && storage.spoofedDecoSku) {
-            const decoObj = {
-                asset: storage.spoofedDecoAsset,
-                skuId: storage.spoofedDecoSku,
-                sku_id: storage.spoofedDecoSku
-            };
-            messageObj.author.avatarDecoration = decoObj;
-            messageObj.author.avatarDecorationData = decoObj;
-        }
-
-        // 4. Avatar URL
-        if (storage.spoofedAvatar) {
-            messageObj.author.avatar = "spoofed_hash";
-            messageObj.author.getAvatarURL = () => storage.spoofedAvatar;
-            messageObj.author.avatarURL = storage.spoofedAvatar;
-            if (typeof messageObj.author.getAvatarSource === "function") {
-                messageObj.author.getAvatarSource = () => ({ uri: storage.spoofedAvatar });
-            }
-        }
+        Object.defineProperty(messageObj.author, "username", { get: () => storage.spoofedDisplayName, configurable: true });
+        Object.defineProperty(messageObj.author, "globalName", { get: () => storage.spoofedDisplayName, configurable: true });
+        Object.defineProperty(messageObj.author, "avatar", { get: () => "spoofed", configurable: true });
     }
 }
 
 export default {
     onLoad: () => {
-        // Safely check Dispatcher payloads
         if (FluxDispatcher) {
             patches.push(patcher.before("dispatch", FluxDispatcher, (args) => {
                 const [payload] = args;
-                if (!payload) return;
-
-                if (payload.type === "LOAD_MESSAGES_SUCCESS" && Array.isArray(payload.messages)) {
+                if ((payload.type === "LOAD_MESSAGES_SUCCESS" || payload.type === "LOCAL_MESSAGE_CREATE") && payload.messages) {
                     const target = payload.messages.find((m: any) => m?.id === storage.targetMessageId);
                     if (target) applyMobileSpoof(target);
-                }
-
-                if ((payload.type === "LOCAL_MESSAGE_CREATE" || payload.type === "MESSAGE_CREATE") && payload.message?.id === storage.targetMessageId) {
-                    applyMobileSpoof(payload.message);
                 }
             }));
         }
         
-        // RowManager handles the live chat rendering on screen
         const RowManager = metro.findByProps("prototype", "generate");
         if (RowManager?.prototype) {
             patches.push(patcher.after("generate", RowManager.prototype, (args, ret) => {
-                if (ret?.message?.id === storage.targetMessageId) {
-                    applyMobileSpoof(ret.message);
-                }
+                if (ret?.message?.id === storage.targetMessageId) applyMobileSpoof(ret.message);
             }));
         }
     },
