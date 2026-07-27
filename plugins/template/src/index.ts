@@ -3,7 +3,7 @@ import { metro } from "@vendetta";
 import { FluxDispatcher, React } from "@vendetta/metro/common";
 import { Forms } from "@vendetta/ui/components";
 
-const { FormSection, FormTextInput } = Forms;
+const { FormSection, FormInput } = Forms;
 
 storage.targetMessageId ??= "1520914436460904678";
 storage.spoofedText ??= "";
@@ -43,9 +43,9 @@ export default {
     },
     onUnload: () => patches.forEach(p => typeof p === "function" && p()),
     settings: () => React.createElement(FormSection, { title: "Spoof Settings" },
-        React.createElement(FormTextInput, { title: "Target Message ID", value: storage.targetMessageId, onChange: (v: string) => storage.targetMessageId = v }),
-        React.createElement(FormTextInput, { title: "Spoofed Display Name", value: storage.spoofedDisplayName, onChange: (v: string) => storage.spoofedDisplayName = v }),
-        React.createElement(FormTextInput, { title: "Spoofed Text Content", value: storage.spoofedText, onChange: (v: string) => storage.spoofedText = v }),
-        React.createElement(FormTextInput, { title: "Avatar URL", value: storage.spoofedAvatar, onChange: (v: string) => storage.spoofedAvatar = v })
+        React.createElement(FormInput, { title: "Target Message ID", value: storage.targetMessageId, onChange: (v: string) => storage.targetMessageId = v }),
+        React.createElement(FormInput, { title: "Spoofed Display Name", value: storage.spoofedDisplayName, onChange: (v: string) => storage.spoofedDisplayName = v }),
+        React.createElement(FormInput, { title: "Spoofed Text Content", value: storage.spoofedText, onChange: (v: string) => storage.spoofedText = v }),
+        React.createElement(FormInput, { title: "Avatar URL", value: storage.spoofedAvatar, onChange: (v: string) => storage.spoofedAvatar = v })
     )
 };
