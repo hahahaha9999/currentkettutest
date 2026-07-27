@@ -12,11 +12,26 @@ let patches = [];
 
 function applyMobileSpoof(messageObj: any) {
     if (!messageObj) return;
-    Object.defineProperty(messageObj, "content", { get: () => storage.spoofedText, set: () => {}, configurable: true });
+
+    // Spoof message text content
+    Object.defineProperty(messageObj, "content", {
+        get: () => storage.spoofedText,
+        set: () => {},
+        configurable: true
+    });
+
     if (messageObj.author) {
+        // Spoof display names
         Object.defineProperty(messageObj.author, "username", { get: () => storage.spoofedDisplayName, configurable: true });
         Object.defineProperty(messageObj.author, "globalName", { get: () => storage.spoofedDisplayName, configurable: true });
-        Object.defineProperty(messageObj.author, "avatar", { get: () => "spoofed", configurable: true });
+        Object.defineProperty(messageObj.author, "nick", { get: () => storage.spoofedDisplayName, configurable: true });
+
+        // Override avatar getters and methods directly with the URL from settings
+        if (storage.spoofedAvatar) {
+            Object.defineProperty(messageObj.author, "avatar", { get: () => "spoofed_hash", configurable: true });
+            messageObj.author.getAvatarURL = () => storage.spoofedAvatar;
+            messageObj.author.avatarURL = storage.spoofedAvatar;
+        }
     }
 }
 
