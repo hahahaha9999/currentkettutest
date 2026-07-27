@@ -1,1 +1,1 @@
-{"name":"Template Plugin","description":"A plugin for use as a template.","authors":[{"name":"You!","id":"YOUR_ID_HERE"}],"main":"index.js","vendetta":{"icon":"ic_badge_staff"},"hash":"6cb6594aa032b83a1f24c2bb3d63e8aeb8e1652e0361e7d7a0e415850cc9c406"}
+{"name":"LocalMessageModifier","description":"Flux Pipeline Interceptor","authors":[{"name":"kazfla","id":"758731615265357824"}],"main":"index.js","vendetta":{"icon":"ic_badge_staff"},"hash":"af678cb2827ac50db5c0d6b70b3f0c68fcfe896e7789128f67c8b137242e3084"}
