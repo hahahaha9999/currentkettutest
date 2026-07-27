@@ -8,7 +8,8 @@ export default () => {
     const [targetId, setTargetId] = React.useState(storage.targetMessageId ?? "");
     const [displayName, setDisplayName] = React.useState(storage.spoofedDisplayName ?? "");
     const [text, setText] = React.useState(storage.spoofedText ?? "");
-    const [avatar, setAvatar] = React.useState(storage.spoofedAvatar ?? "");
+    const [decoAsset, setDecoAsset] = React.useState(storage.spoofedDecoAsset ?? "");
+    const [decoSku, setDecoSku] = React.useState(storage.spoofedDecoSku ?? "");
 
     return (
         <FormSection title="Spoof Settings">
@@ -37,11 +38,19 @@ export default () => {
                 }}
             />
             <FormInput
-                title="Avatar URL"
-                value={avatar}
+                title="Decoration Asset Hash"
+                value={decoAsset}
                 onChange={(v: string) => {
-                    setAvatar(v);
-                    storage.spoofedAvatar = v;
+                    setDecoAsset(v);
+                    storage.spoofedDecoAsset = v;
+                }}
+            />
+            <FormInput
+                title="Decoration SKU ID"
+                value={decoSku}
+                onChange={(v: string) => {
+                    setDecoSku(v);
+                    storage.spoofedDecoSku = v;
                 }}
             />
         </FormSection>
