@@ -8,35 +8,41 @@ export default () => {
     const [targetId, setTargetId] = React.useState(storage.targetMessageId ?? "");
     const [displayName, setDisplayName] = React.useState(storage.spoofedDisplayName ?? "");
     const [text, setText] = React.useState(storage.spoofedText ?? "");
-    const [decoAsset, setDecoAsset] = React.useState(storage.spoofedDecoAsset ?? "");
-    const [decoSku, setDecoSku] = React.useState(storage.spoofedDecoSku ?? "");
+    const [avatar, setAvatar] = React.useState(storage.spoofedAvatar ?? "");
 
     return (
         <FormSection title="Spoof Settings">
             <FormInput
+                title="Target Message ID"
                 value={targetId}
-                placeholder="Target Message ID"
-                onChange={(v: string) => { setTargetId(v); storage.targetMessageId = v; }}
+                onChange={(v: string) => {
+                    setTargetId(v);
+                    storage.targetMessageId = v;
+                }}
             />
             <FormInput
+                title="Spoofed Display Name"
                 value={displayName}
-                placeholder="Spoofed Display Name"
-                onChange={(v: string) => { setDisplayName(v); storage.spoofedDisplayName = v; }}
+                onChange={(v: string) => {
+                    setDisplayName(v);
+                    storage.spoofedDisplayName = v;
+                }}
             />
             <FormInput
+                title="Spoofed Text Content"
                 value={text}
-                placeholder="Spoofed Text Content"
-                onChange={(v: string) => { setText(v); storage.spoofedText = v; }}
+                onChange={(v: string) => {
+                    setText(v);
+                    storage.spoofedText = v;
+                }}
             />
             <FormInput
-                value={decoAsset}
-                placeholder="Avatar Decoration Asset ID"
-                onChange={(v: string) => { setDecoAsset(v); storage.spoofedDecoAsset = v; }}
-            />
-            <FormInput
-                value={decoSku}
-                placeholder="Avatar Decoration SKU ID"
-                onChange={(v: string) => { setDecoSku(v); storage.spoofedDecoSku = v; }}
+                title="Avatar URL"
+                value={avatar}
+                onChange={(v: string) => {
+                    setAvatar(v);
+                    storage.spoofedAvatar = v;
+                }}
             />
         </FormSection>
     );
