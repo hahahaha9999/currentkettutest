@@ -13,7 +13,7 @@ let patches = [];
 function applyMobileSpoof(messageObj: any) {
     if (!messageObj) return;
 
-    // 1. Spoof message text content
+    // Spoof message text content
     Object.defineProperty(messageObj, "content", {
         get: () => storage.spoofedText,
         set: () => {},
@@ -21,54 +21,36 @@ function applyMobileSpoof(messageObj: any) {
     });
 
     if (messageObj.author) {
-        // 2. Spoof display names
+        // Spoof display names
         Object.defineProperty(messageObj.author, "username", { get: () => storage.spoofedDisplayName, configurable: true });
         Object.defineProperty(messageObj.author, "globalName", { get: () => storage.spoofedDisplayName, configurable: true });
         Object.defineProperty(messageObj.author, "nick", { get: () => storage.spoofedDisplayName, configurable: true });
 
-        // 3. Force override avatar getters & methods
+        // Override avatar getters and methods directly with the URL from settings
         if (storage.spoofedAvatar) {
             Object.defineProperty(messageObj.author, "avatar", { get: () => "spoofed_hash", configurable: true });
             messageObj.author.getAvatarURL = () => storage.spoofedAvatar;
             messageObj.author.avatarURL = storage.spoofedAvatar;
-            if (typeof messageObj.author.getAvatarSource === "function") {
-                messageObj.author.getAvatarSource = () => ({ uri: storage.spoofedAvatar });
-            }
         }
     }
 }
 
 export default {
     onLoad: () => {
-        // Patch UserStore directly to override avatar across all mobile UI components
-        const UserStore = metro.findByProps("getUser", "getCurrentUser");
-        if (UserStore) {
-            patches.push(patcher.after("getUser", UserStore, (args, user) => {
-                if (user && storage.spoofedAvatar) {
-                    user.getAvatarURL = () => storage.spoofedAvatar;
-                    user.getAvatarSource = () => ({ uri: storage.spoofedAvatar });
-                }
-            }));
-        }
-
-        // Patch FluxDispatcher for incoming message payloads
         if (FluxDispatcher) {
             patches.push(patcher.before("dispatch", FluxDispatcher, (args) => {
                 const [payload] = args;
-                if ((payload.type === "LOAD_MESSAGES_SUCCESS" || payload.type === "LOCAL_MESSAGE_CREATE" || payload.type === "MESSAGE_CREATE") && payload.messages) {
+                if ((payload.type === "LOAD_MESSAGES_SUCCESS" || payload.type === "LOCAL_MESSAGE_CREATE") && payload.messages) {
                     const target = payload.messages.find((m: any) => m?.id === storage.targetMessageId);
                     if (target) applyMobileSpoof(target);
                 }
             }));
         }
         
-        // Patch RowManager for live chat row generation
         const RowManager = metro.findByProps("prototype", "generate");
         if (RowManager?.prototype) {
             patches.push(patcher.after("generate", RowManager.prototype, (args, ret) => {
-                if (ret?.message?.id === storage.targetMessageId) {
-                    applyMobileSpoof(ret.message);
-                }
+                if (ret?.message?.id === storage.targetMessageId) applyMobileSpoof(ret.message);
             }));
         }
     },
