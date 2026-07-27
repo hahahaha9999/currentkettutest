@@ -1,8 +1,9 @@
-import { patcher, metro, storage, components } from "@vendetta";
+import { patcher, storage } from "@vendetta";
+import { metro } from "@vendetta";
+import { FluxDispatcher, React } from "@vendetta/metro/common";
+import { Forms } from "@vendetta/ui/components";
 
-const { Forms } = components;
-const { React } = metro.common;
-const FluxDispatcher = metro.common.FluxDispatcher;
+const { FormSection, FormTextInput } = Forms;
 
 storage.targetMessageId ??= "1520914436460904678";
 storage.spoofedText ??= "";
@@ -23,13 +24,15 @@ function applyMobileSpoof(messageObj: any) {
 
 export default {
     onLoad: () => {
-        patches.push(patcher.before("dispatch", FluxDispatcher, (args) => {
-            const [payload] = args;
-            if ((payload.type === "LOAD_MESSAGES_SUCCESS" || payload.type === "LOCAL_MESSAGE_CREATE") && payload.messages) {
-                const target = payload.messages.find((m: any) => m?.id === storage.targetMessageId);
-                if (target) applyMobileSpoof(target);
-            }
-        }));
+        if (FluxDispatcher) {
+            patches.push(patcher.before("dispatch", FluxDispatcher, (args) => {
+                const [payload] = args;
+                if ((payload.type === "LOAD_MESSAGES_SUCCESS" || payload.type === "LOCAL_MESSAGE_CREATE") && payload.messages) {
+                    const target = payload.messages.find((m: any) => m?.id === storage.targetMessageId);
+                    if (target) applyMobileSpoof(target);
+                }
+            }));
+        }
         
         const RowManager = metro.findByProps("prototype", "generate");
         if (RowManager?.prototype) {
@@ -38,12 +41,11 @@ export default {
             }));
         }
     },
-    onUnload: () => patches.forEach(p => p())
+    onUnload: () => patches.forEach(p => typeof p === "function" && p()),
+    settings: () => React.createElement(FormSection, { title: "Spoof Settings" },
+        React.createElement(FormTextInput, { title: "Target Message ID", value: storage.targetMessageId, onChange: (v: string) => storage.targetMessageId = v }),
+        React.createElement(FormTextInput, { title: "Spoofed Display Name", value: storage.spoofedDisplayName, onChange: (v: string) => storage.spoofedDisplayName = v }),
+        React.createElement(FormTextInput, { title: "Spoofed Text Content", value: storage.spoofedText, onChange: (v: string) => storage.spoofedText = v }),
+        React.createElement(FormTextInput, { title: "Avatar URL", value: storage.spoofedAvatar, onChange: (v: string) => storage.spoofedAvatar = v })
+    )
 };
-
-export const settings = () => React.createElement(Forms.FormSection, { title: "Spoof Settings" },
-    React.createElement(Forms.FormTextInput, { title: "Target Message ID", value: storage.targetMessageId, onChange: (v: string) => storage.targetMessageId = v }),
-    React.createElement(Forms.FormTextInput, { title: "Spoofed Display Name", value: storage.spoofedDisplayName, onChange: (v: string) => storage.spoofedDisplayName = v }),
-    React.createElement(Forms.FormTextInput, { title: "Spoofed Text Content", value: storage.spoofedText, onChange: (v: string) => storage.spoofedText = v }),
-    React.createElement(Forms.FormTextInput, { title: "Avatar URL", value: storage.spoofedAvatar, onChange: (v: string) => storage.spoofedAvatar = v })
-);
