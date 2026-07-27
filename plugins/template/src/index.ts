@@ -6,7 +6,7 @@ import Settings from "./Settings";
 storage.targetMessageId ??= "";
 storage.spoofedText ??= "";
 storage.spoofedDisplayName ??= "";
-storage.spoofedAvatar ??= "https://cdn.discordapp.com/avatars/758731615265357824/d58a1012427825b24816247844152b6a.png";
+storage.spoofedAvatar ??= "";
 
 let patches = [];
 
