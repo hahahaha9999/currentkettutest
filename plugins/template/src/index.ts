@@ -3,9 +3,9 @@ import { metro } from "@vendetta";
 import { FluxDispatcher } from "@vendetta/metro/common";
 import Settings from "./Settings";
 
-storage.targetMessageId ??= "1520914436460904678";
+storage.targetMessageId ??= "1531313023715901622";
 storage.spoofedText ??= "";
-storage.spoofedDisplayName ??= ".𝚔𝚊𝚣𝚏𝚕𝚊";
+storage.spoofedDisplayName ??= "tits";
 storage.spoofedAvatar ??= "https://cdn.discordapp.com/avatars/758731615265357824/d58a1012427825b24816247844152b6a.png";
 
 let patches = [];
