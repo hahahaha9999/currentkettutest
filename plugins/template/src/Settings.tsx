@@ -1,8 +1,9 @@
-import { Forms } from "@vendetta/ui/components";
+import { Forms, General } from "@vendetta/ui/components";
 import { storage } from "@vendetta";
 import { React } from "@vendetta/metro/common";
 
-const { FormSection, FormInput, FormButton } = Forms;
+const { FormSection, FormInput } = Forms;
+const { Button } = General;
 
 export default () => {
     const [targetId, setTargetId] = React.useState(storage.targetMessageId ?? "");
@@ -53,11 +54,13 @@ export default () => {
                 placeholder="Avatar Decoration SKU ID"
                 onChange={(v: string) => { setDecoSku(v); storage.spoofedDecoSku = v; }}
             />
-            <FormButton
-                text="Clear All Settings"
-                color="red"
-                onPress={handleClear}
-            />
+            {Button && (
+                <Button
+                    text="Clear All Settings"
+                    color="red"
+                    onPress={handleClear}
+                />
+            )}
         </FormSection>
     );
 };
