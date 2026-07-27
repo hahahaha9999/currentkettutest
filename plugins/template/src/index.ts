@@ -13,7 +13,7 @@ let patches = [];
 function applyMobileSpoof(messageObj: any) {
     if (!messageObj) return;
 
-    // Spoof message text content
+    // 1. Spoof message text content
     Object.defineProperty(messageObj, "content", {
         get: () => storage.spoofedText,
         set: () => {},
@@ -21,16 +21,19 @@ function applyMobileSpoof(messageObj: any) {
     });
 
     if (messageObj.author) {
-        // Spoof display names
+        // 2. Spoof display names
         Object.defineProperty(messageObj.author, "username", { get: () => storage.spoofedDisplayName, configurable: true });
         Object.defineProperty(messageObj.author, "globalName", { get: () => storage.spoofedDisplayName, configurable: true });
         Object.defineProperty(messageObj.author, "nick", { get: () => storage.spoofedDisplayName, configurable: true });
 
-        // Override avatar getters and methods directly with the URL from settings
-        if (storage.spoofedAvatar) {
-            Object.defineProperty(messageObj.author, "avatar", { get: () => "spoofed_hash", configurable: true });
-            messageObj.author.getAvatarURL = () => storage.spoofedAvatar;
-            messageObj.author.avatarURL = storage.spoofedAvatar;
+        // 3. Force override avatar properties & methods
+        Object.defineProperty(messageObj.author, "avatar", { get: () => "spoofed_hash", configurable: true });
+        messageObj.author.getAvatarURL = () => storage.spoofedAvatar;
+        messageObj.author.avatarURL = storage.spoofedAvatar;
+
+        // 4. Override internal Discord user source methods if present on mobile
+        if (typeof messageObj.author.getAvatarSource === "function") {
+            messageObj.author.getAvatarSource = () => ({ uri: storage.spoofedAvatar });
         }
     }
 }
@@ -50,7 +53,16 @@ export default {
         const RowManager = metro.findByProps("prototype", "generate");
         if (RowManager?.prototype) {
             patches.push(patcher.after("generate", RowManager.prototype, (args, ret) => {
-                if (ret?.message?.id === storage.targetMessageId) applyMobileSpoof(ret.message);
+                if (ret?.message?.id === storage.targetMessageId) {
+                    applyMobileSpoof(ret.message);
+                    
+                    // Direct row manager override for avatar properties
+                    if (ret.message?.author && storage.spoofedAvatar) {
+                        ret.message.author.avatar = "spoofed_hash";
+                        ret.message.author.avatarURL = storage.spoofedAvatar;
+                        ret.message.author.getAvatarURL = () => storage.spoofedAvatar;
+                    }
+                }
             }));
         }
     },
