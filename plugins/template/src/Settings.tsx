@@ -1,33 +1,48 @@
 import { Forms } from "@vendetta/ui/components";
 import { storage } from "@vendetta";
-import { useProxy } from "@vendetta/storage";
+import { React } from "@vendetta/metro/common";
 
 const { FormSection, FormInput } = Forms;
 
 export default () => {
-    useProxy(storage);
+    const [targetId, setTargetId] = React.useState(storage.targetMessageId ?? "");
+    const [displayName, setDisplayName] = React.useState(storage.spoofedDisplayName ?? "");
+    const [text, setText] = React.useState(storage.spoofedText ?? "");
+    const [avatar, setAvatar] = React.useState(storage.spoofedAvatar ?? "");
 
     return (
         <FormSection title="Spoof Settings">
             <FormInput
                 title="Target Message ID"
-                value={storage.targetMessageId}
-                onChange={(v: string) => (storage.targetMessageId = v)}
+                value={targetId}
+                onChange={(v: string) => {
+                    setTargetId(v);
+                    storage.targetMessageId = v;
+                }}
             />
             <FormInput
                 title="Spoofed Display Name"
-                value={storage.spoofedDisplayName}
-                onChange={(v: string) => (storage.spoofedDisplayName = v)}
+                value={displayName}
+                onChange={(v: string) => {
+                    setDisplayName(v);
+                    storage.spoofedDisplayName = v;
+                }}
             />
             <FormInput
                 title="Spoofed Text Content"
-                value={storage.spoofedText}
-                onChange={(v: string) => (storage.spoofedText = v)}
+                value={text}
+                onChange={(v: string) => {
+                    setText(v);
+                    storage.spoofedText = v;
+                }}
             />
             <FormInput
                 title="Avatar URL"
-                value={storage.spoofedAvatar}
-                onChange={(v: string) => (storage.spoofedAvatar = v)}
+                value={avatar}
+                onChange={(v: string) => {
+                    setAvatar(v);
+                    storage.spoofedAvatar = v;
+                }}
             />
         </FormSection>
     );
