@@ -4,38 +4,50 @@ import { FluxDispatcher } from "@vendetta/metro/common";
 import Settings from "./Settings";
 
 storage.targetMessageId ??= "";
-storage.spoofedText ??= "";
-storage.spoofedDisplayName ??= "";
+storage.spoofedName ??= "";
+storage.spoofedContent ??= "";
 storage.spoofedAvatar ??= "";
 
 let patches = [];
 
-function applyMobileSpoof(messageObj: any) {
-    if (!messageObj) return;
-    Object.defineProperty(messageObj, "content", { get: () => storage.spoofedText, set: () => {}, configurable: true });
-    if (messageObj.author) {
-        Object.defineProperty(messageObj.author, "username", { get: () => storage.spoofedDisplayName, configurable: true });
-        Object.defineProperty(messageObj.author, "globalName", { get: () => storage.spoofedDisplayName, configurable: true });
-        Object.defineProperty(messageObj.author, "avatar", { get: () => "spoofed", configurable: true });
+function applySpoof(msg: any) {
+    if (!msg) return;
+    
+    if (storage.spoofedContent) {
+        msg.content = storage.spoofedContent;
+    }
+    if (msg.author) {
+        if (storage.spoofedName) msg.author.username = storage.spoofedName;
+        if (storage.spoofedAvatar) msg.author.avatar = storage.spoofedAvatar;
     }
 }
 
 export default {
     onLoad: () => {
+        // Intercept initial message loads
         if (FluxDispatcher) {
             patches.push(patcher.before("dispatch", FluxDispatcher, (args) => {
                 const [payload] = args;
-                if ((payload.type === "LOAD_MESSAGES_SUCCESS" || payload.type === "LOCAL_MESSAGE_CREATE") && payload.messages) {
-                    const target = payload.messages.find((m: any) => m?.id === storage.targetMessageId);
-                    if (target) applyMobileSpoof(target);
+                if (!payload) return;
+
+                if ((payload.type === "LOAD_MESSAGES_SUCCESS" || payload.type === "LOCAL_MESSAGE_CREATE") && Array.isArray(payload.messages)) {
+                    payload.messages.forEach((msg: any) => {
+                        if (storage.targetMessageId && msg?.id === storage.targetMessageId) {
+                            applySpoof(msg);
+                        }
+                    });
                 }
             }));
         }
-        
+
+        // Intercept row rendering
         const RowManager = metro.findByProps("prototype", "generate");
         if (RowManager?.prototype) {
             patches.push(patcher.after("generate", RowManager.prototype, (args, ret) => {
-                if (ret?.message?.id === storage.targetMessageId) applyMobileSpoof(ret.message);
+                const msg = ret?.message;
+                if (storage.targetMessageId && msg?.id === storage.targetMessageId) {
+                    applySpoof(msg);
+                }
             }));
         }
     },
