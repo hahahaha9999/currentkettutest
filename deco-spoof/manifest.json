@@ -1,1 +1,1 @@
-{"name":"Deco Spoof","description":"Spoof avatar decorations using Asset Hash and SKU ID.","authors":[{"name":"hahahaha9999"}],"main":"index.js","hash":"64eaccce1558bd75f4b35bd9f4eed58001d70348b18c9eef623bea7b1551bf9e"}
+{"name":"CustomAvatarDeco","description":"Overlay a custom local decoration image on your own avatar (client-side only)","authors":[{"name":"kazfla","id":"758731615265357824"}],"main":"index.js","vendetta":{"icon":"ic_badge_staff"},"hash":"f8ce09cf68990595b1c9672eb2648b3027f0880041755a59276f8a68743f4bb9"}
