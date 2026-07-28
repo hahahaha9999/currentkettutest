@@ -3,43 +3,78 @@ import { metro } from "@vendetta";
 import { FluxDispatcher } from "@vendetta/metro/common";
 import Settings from "./Settings";
 
-storage.decoTargetUserId ??= "";
-storage.decoTargetMessageId ??= "";
-storage.decoAsset ??= "";
-storage.decoSku ??= "";
+storage.targetMessageId ??= "";
+storage.targetChannelId ??= "";
+storage.spoofedName ??= "";
+storage.spoofedContent ??= "";
+storage.spoofedAvatar ??= "";
+storage.spoofedDecoration ??= ""; // Direct APNG / PNG image URL for decoration
 
-let patches = [];
+let patches: any[] = [];
 
-function getDecoObj() {
-    if (!storage.decoAsset || !storage.decoSku) return null;
-    return {
-        asset: storage.decoAsset,
-        skuId: storage.decoSku,
-        sku_id: storage.decoSku
-    };
-}
-
-function patchAuthor(authorObj: any) {
-    if (!authorObj) return;
-    const decoData = getDecoObj();
-    if (!decoData) return;
+function safeSpoof(msg: any) {
+    if (!msg || !storage.targetMessageId || msg.id !== storage.targetMessageId) return;
 
     try {
-        Object.defineProperty(authorObj, "avatarDecoration", { get: () => decoData, configurable: true });
-        Object.defineProperty(authorObj, "avatarDecorationData", { get: () => decoData, configurable: true });
-        Object.defineProperty(authorObj, "avatar_decoration_data", { get: () => decoData, configurable: true });
-    } catch (e) {}
+        if (storage.spoofedContent) {
+            Object.defineProperty(msg, "content", {
+                get: () => storage.spoofedContent,
+                set: () => {},
+                configurable: true,
+                enumerable: true
+            });
+        }
+
+        if (msg.author) {
+            if (storage.spoofedName) {
+                Object.defineProperty(msg.author, "username", {
+                    get: () => storage.spoofedName,
+                    set: () => {},
+                    configurable: true,
+                    enumerable: true
+                });
+                Object.defineProperty(msg.author, "globalName", {
+                    get: () => storage.spoofedName,
+                    set: () => {},
+                    configurable: true,
+                    enumerable: true
+                });
+            }
+
+            if (storage.spoofedAvatar && typeof storage.spoofedAvatar === "string" && storage.spoofedAvatar.trim() !== "") {
+                Object.defineProperty(msg.author, "avatar", {
+                    get: () => storage.spoofedAvatar,
+                    set: () => {},
+                    configurable: true,
+                    enumerable: true
+                });
+            }
+
+            // Spoof avatar decoration locally without approval
+            if (storage.spoofedDecoration && typeof storage.spoofedDecoration === "string" && storage.spoofedDecoration.trim() !== "") {
+                Object.defineProperty(msg.author, "avatarDecorationData", {
+                    get: () => ({
+                        asset: storage.spoofedDecoration,
+                        skuId: "000000000000000000"
+                    }),
+                    set: () => {},
+                    configurable: true,
+                    enumerable: true
+                });
+            }
+        }
+    } catch (e) {
+        // Prevent property errors
+    }
 }
 
 export default {
     onLoad: () => {
-        const UserStore = metro.findByProps("getCurrentUser", "getUser");
-        if (UserStore) {
-            patches.push(patcher.after("getUser", UserStore, (args, user) => {
-                if (!user) return;
-                const targetId = storage.decoTargetUserId || UserStore.getCurrentUser()?.id;
-                if (user.id === targetId) {
-                    patchAuthor(user);
+        const RowManager = metro.findByProps("prototype", "generate");
+        if (RowManager?.prototype) {
+            patches.push(patcher.after("generate", RowManager.prototype, (args, ret) => {
+                if (ret?.message) {
+                    safeSpoof(ret.message);
                 }
             }));
         }
@@ -50,14 +85,9 @@ export default {
                 if (!payload) return;
 
                 if ((payload.type === "LOAD_MESSAGES_SUCCESS" || payload.type === "LOCAL_MESSAGE_CREATE") && Array.isArray(payload.messages)) {
-                    payload.messages.forEach((msg: any) => {
-                        if (
-                            (storage.decoTargetMessageId && msg?.id === storage.decoTargetMessageId) ||
-                            (storage.decoTargetUserId && msg?.author?.id === storage.decoTargetUserId)
-                        ) {
-                            patchAuthor(msg.author);
-                        }
-                    });
+                    payload.messages.forEach(safeSpoof);
+                } else if (payload.type === "MESSAGE_CREATE" && payload.message) {
+                    safeSpoof(payload.message);
                 }
             }));
         }
