@@ -11,55 +11,52 @@ storage.spoofedAvatar ??= "";
 let patches = [];
 
 function applySpoof(msg: any) {
-    if (!msg || msg.id !== storage.targetMessageId) return;
+    if (!msg || msg.id !== storage.targetMessageId) return msg;
 
-    // Define direct property getters so Discord reads the spoofed values on EVERY render pass
+    // Clone the message object so React Native detects a reference change and forces a re-render
+    const spoofedMsg = Object.create(Object.getPrototypeOf(msg), Object.getOwnPropertyDescriptors(msg));
+
     if (storage.spoofedContent) {
-        Object.defineProperty(msg, "content", {
-            get: () => storage.spoofedContent,
-            configurable: true,
-            enumerable: true
-        });
+        spoofedMsg.content = storage.spoofedContent;
     }
 
-    if (msg.author) {
+    if (spoofedMsg.author) {
+        spoofedMsg.author = { ...spoofedMsg.author };
         if (storage.spoofedName) {
-            Object.defineProperty(msg.author, "username", {
-                get: () => storage.spoofedName,
-                configurable: true,
-                enumerable: true
-            });
-            Object.defineProperty(msg.author, "globalName", {
-                get: () => storage.spoofedName,
-                configurable: true,
-                enumerable: true
-            });
+            spoofedMsg.author.username = storage.spoofedName;
+            spoofedMsg.author.globalName = storage.spoofedName;
+        }
+        if (storage.spoofedAvatar) {
+            spoofedMsg.author.avatar = storage.spoofedAvatar;
         }
     }
+
+    return spoofedMsg;
 }
 
 export default {
     onLoad: () => {
-        // Patch Flux dispatches
+        // Intercept row rendering for live updates
+        const RowManager = metro.findByProps("prototype", "generate");
+        if (RowManager?.prototype) {
+            patches.push(patcher.after("generate", RowManager.prototype, (args, ret) => {
+                if (ret?.message && ret.message.id === storage.targetMessageId) {
+                    ret.message = applySpoof(ret.message);
+                }
+            }));
+        }
+
+        // Intercept dispatches
         if (FluxDispatcher) {
             patches.push(patcher.before("dispatch", FluxDispatcher, (args) => {
                 const [payload] = args;
                 if (!payload) return;
 
                 if ((payload.type === "LOAD_MESSAGES_SUCCESS" || payload.type === "LOCAL_MESSAGE_CREATE") && Array.isArray(payload.messages)) {
-                    payload.messages.forEach(applySpoof);
-                } else if (payload.type === "MESSAGE_CREATE" && payload.message) {
-                    applySpoof(payload.message);
+                    payload.messages = payload.messages.map((msg: any) => {
+                        return msg?.id === storage.targetMessageId ? applySpoof(msg) : msg;
+                    });
                 }
-            }));
-        }
-
-        // Patch RowManager rendering so it forces the getter onto the row payload live
-        const RowManager = metro.findByProps("prototype", "generate");
-        if (RowManager?.prototype) {
-            patches.push(patcher.after("generate", RowManager.prototype, (args, ret) => {
-                const msg = ret?.message;
-                if (msg) applySpoof(msg);
             }));
         }
     },
