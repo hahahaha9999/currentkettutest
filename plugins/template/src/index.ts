@@ -9,50 +9,72 @@ storage.spoofedName ??= "";
 storage.spoofedContent ??= "";
 storage.spoofedAvatar ??= "";
 
-let patches = [];
+let patches: any[] = [];
 
-function applySpoof(msg: any) {
-    if (!msg || msg.id !== storage.targetMessageId) return;
+function safeSpoof(msg: any) {
+    if (!msg || !storage.targetMessageId || msg.id !== storage.targetMessageId) return;
 
-    if (storage.spoofedContent) {
-        msg.content = storage.spoofedContent;
-    }
-
-    if (msg.author) {
-        if (storage.spoofedName) {
-            msg.author.username = storage.spoofedName;
-            msg.author.globalName = storage.spoofedName;
+    try {
+        if (storage.spoofedContent) {
+            Object.defineProperty(msg, "content", {
+                get: () => storage.spoofedContent,
+                set: () => {},
+                configurable: true,
+                enumerable: true
+            });
         }
-        if (storage.spoofedAvatar) {
-            msg.author.avatar = storage.spoofedAvatar;
+
+        if (msg.author) {
+            if (storage.spoofedName) {
+                Object.defineProperty(msg.author, "username", {
+                    get: () => storage.spoofedName,
+                    set: () => {},
+                    configurable: true,
+                    enumerable: true
+                });
+                Object.defineProperty(msg.author, "globalName", {
+                    get: () => storage.spoofedName,
+                    set: () => {},
+                    configurable: true,
+                    enumerable: true
+                });
+            }
+            if (storage.spoofedAvatar) {
+                Object.defineProperty(msg.author, "avatar", {
+                    get: () => storage.spoofedAvatar,
+                    set: () => {},
+                    configurable: true,
+                    enumerable: true
+                });
+            }
         }
+    } catch (e) {
+        // Prevent any unexpected getter failure from crashing the React render tree
     }
 }
 
 export default {
     onLoad: () => {
-        // Intercept row rendering safely
+        // Intercept row generation safely
         const RowManager = metro.findByProps("prototype", "generate");
         if (RowManager?.prototype) {
             patches.push(patcher.after("generate", RowManager.prototype, (args, ret) => {
-                if (ret?.message && ret.message.id === storage.targetMessageId) {
-                    applySpoof(ret.message);
+                if (ret?.message) {
+                    safeSpoof(ret.message);
                 }
             }));
         }
 
-        // Intercept initial loads
+        // Intercept initial message load dispatches
         if (FluxDispatcher) {
             patches.push(patcher.before("dispatch", FluxDispatcher, (args) => {
                 const [payload] = args;
                 if (!payload) return;
 
                 if ((payload.type === "LOAD_MESSAGES_SUCCESS" || payload.type === "LOCAL_MESSAGE_CREATE") && Array.isArray(payload.messages)) {
-                    payload.messages.forEach((msg: any) => {
-                        if (msg?.id === storage.targetMessageId) {
-                            applySpoof(msg);
-                        }
-                    });
+                    payload.messages.forEach(safeSpoof);
+                } else if (payload.type === "MESSAGE_CREATE" && payload.message) {
+                    safeSpoof(payload.message);
                 }
             }));
         }
