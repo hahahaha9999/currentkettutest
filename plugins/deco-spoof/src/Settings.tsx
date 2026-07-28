@@ -5,36 +5,68 @@ import { React } from "@vendetta/metro/common";
 const { FormSection, FormInput } = Forms;
 
 export default () => {
-    const [userId, setUserId] = React.useState(storage.decoTargetUserId ?? "");
-    const [messageId, setMessageId] = React.useState(storage.decoTargetMessageId ?? "");
-    const [asset, setAsset] = React.useState(storage.decoAsset ?? "");
-    const [sku, setSku] = React.useState(storage.decoSku ?? "");
+    const [msgId, setMsgId] = React.useState(storage.targetMessageId ?? "");
+    const [chanId, setChanId] = React.useState(storage.targetChannelId ?? "");
+    const [name, setName] = React.useState(storage.spoofedName ?? "");
+    const [content, setContent] = React.useState(storage.spoofedContent ?? "");
+    const [avatar, setAvatar] = React.useState(storage.spoofedAvatar ?? "");
+    const [deco, setDeco] = React.useState(storage.spoofedDecoration ?? "");
 
     return (
-        <FormSection title="Decoration Spoof Settings">
+        <FormSection title="Local Message Modifier">
             <FormInput
-                title="Target User ID (Applies to all their messages)"
-                value={userId}
-                placeholder="Target User ID"
-                onChange={(v: string) => { setUserId(v); storage.decoTargetUserId = v; }}
-            />
-            <FormInput
-                title="Target Message ID (Optional)"
-                value={messageId}
+                title="Target Message ID"
+                value={msgId}
                 placeholder="Target Message ID"
-                onChange={(v: string) => { setMessageId(v); storage.decoTargetMessageId = v; }}
+                onChange={(v: string) => {
+                    setMsgId(v);
+                    storage.targetMessageId = v || undefined;
+                }}
             />
             <FormInput
-                title="Decoration Asset Hash"
-                value={asset}
-                placeholder="e.g. a_c7febbc41e0673e42f79a79078701660"
-                onChange={(v: string) => { setAsset(v); storage.decoAsset = v; }}
+                title="Channel ID"
+                value={chanId}
+                placeholder="DM or Channel ID"
+                onChange={(v: string) => {
+                    setChanId(v);
+                    storage.targetChannelId = v || undefined;
+                }}
             />
             <FormInput
-                title="Decoration SKU ID"
-                value={sku}
-                placeholder="e.g. 1354894010602361124"
-                onChange={(v: string) => { setSku(v); storage.decoSku = v; }}
+                title="Spoofed Display Name"
+                value={name}
+                placeholder="New Name"
+                onChange={(v: string) => {
+                    setName(v);
+                    storage.spoofedName = v || undefined;
+                }}
+            />
+            <FormInput
+                title="Spoofed Text Content"
+                value={content}
+                placeholder="New Content"
+                onChange={(v: string) => {
+                    setContent(v);
+                    storage.spoofedContent = v || undefined;
+                }}
+            />
+            <FormInput
+                title="Avatar URL"
+                value={avatar}
+                placeholder="Direct Image Link"
+                onChange={(v: string) => {
+                    setAvatar(v);
+                    storage.spoofedAvatar = v || undefined;
+                }}
+            />
+            <FormInput
+                title="Avatar Decoration URL"
+                value={deco}
+                placeholder="Direct APNG or PNG Decoration URL"
+                onChange={(v: string) => {
+                    setDeco(v);
+                    storage.spoofedDecoration = v || undefined;
+                }}
             />
         </FormSection>
     );
