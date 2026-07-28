@@ -1,23 +1,9 @@
-import { Forms } from "@vendetta/ui/components";
-import { storage } from "@vendetta";
-import { React } from "@vendetta/metro/common";
-
-const { FormSection, FormInput } = Forms;
-
-export default () => {
-    const [deco, setDeco] = React.useState(storage.spoofedDecoration ?? "");
-
-    return (
-        <FormSection title="Custom Avatar Decoration">
-            <FormInput
-                title="Avatar Decoration URL"
-                value={deco}
-                placeholder="Paste direct PNG or APNG link here"
-                onChange={(v: string) => {
-                    setDeco(v);
-                    storage.spoofedDecoration = v || undefined;
-                }}
-            />
-        </FormSection>
-    );
-};
+{
+  "name": "CustomAvatarDeco",
+  "description": "Overlay a custom local decoration image on your own avatar (client-side only)",
+  "authors": [{ "name": "kazfla", "id": "758731615265357824" }],
+  "main": "src/index.ts",
+  "vendetta": {
+    "icon": "ic_badge_staff"
+  }
+}
