@@ -5,8 +5,8 @@ import { React } from "@vendetta/metro/common";
 const { FormSection, FormInput } = Forms;
 
 export default () => {
-    const [userId, setUserId] = React.useState(storage.targetUserId ?? "");
-    const [messageId, setMessageId] = React.useState(storage.targetMessageId ?? "");
+    const [userId, setUserId] = React.useState(storage.decoTargetUserId ?? "");
+    const [messageId, setMessageId] = React.useState(storage.decoTargetMessageId ?? "");
     const [asset, setAsset] = React.useState(storage.decoAsset ?? "");
     const [sku, setSku] = React.useState(storage.decoSku ?? "");
 
@@ -16,13 +16,13 @@ export default () => {
                 title="Target User ID (Applies to all their messages)"
                 value={userId}
                 placeholder="Target User ID"
-                onChange={(v: string) => { setUserId(v); storage.targetUserId = v; }}
+                onChange={(v: string) => { setUserId(v); storage.decoTargetUserId = v; }}
             />
             <FormInput
                 title="Target Message ID (Optional)"
                 value={messageId}
                 placeholder="Target Message ID"
-                onChange={(v: string) => { setMessageId(v); storage.targetMessageId = v; }}
+                onChange={(v: string) => { setMessageId(v); storage.decoTargetMessageId = v; }}
             />
             <FormInput
                 title="Decoration Asset Hash"
