@@ -1,0 +1,10 @@
+{
+  "name": "Deco Spoof",
+  "description": "Spoof avatar decorations using Asset Hash and SKU ID.",
+  "authors": [
+    {
+      "name": "hahahaha9999"
+    }
+  ],
+  "main": "src/index.ts"
+}
