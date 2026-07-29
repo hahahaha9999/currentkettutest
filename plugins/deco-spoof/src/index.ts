@@ -1,57 +1,37 @@
 import { storage } from "@vendetta";
-import { findByProps } from "@vendetta/metro";
-import { before } from "@vendetta/patcher";
+import { findByStoreName } from "@vendetta/metro";
+import { FluxDispatcher } from "@vendetta/metro/common";
 import Settings from "./Settings";
 
-const unpatches: (() => void)[] = [];
+const UserStore = findByStoreName("UserStore");
 
-function log(line: string) {
-    const existing = storage.debugLog ?? "";
-    storage.debugLog = (existing + "\n" + line).slice(-4000); // keep last ~4000 chars
+function applyLocalDecoration() {
+    const user = UserStore.getCurrentUser();
+    if (!user) return;
+
+    if (storage.customDecoUrl) {
+        // "asset" here is just our own local URL, not a real Discord SKU/asset id
+        user.avatarDecoration = { asset: storage.customDecoUrl, skuId: "local-custom" };
+    } else {
+        user.avatarDecoration = null;
+    }
+    user.avatarDecorationData = user.avatarDecoration;
+
+    // Only touches your own client's rendering of your own user object
+    FluxDispatcher.dispatch({ type: "CURRENT_USER_UPDATE", user });
 }
 
 export const onLoad = () => {
-    storage.debugLog = ""; // reset each load
-
-    const candidates: string[] = [];
-    // @ts-ignore - metro internal cache, only for debugging
-    const cache = window.modules ?? {};
-    for (const id in cache) {
-        try {
-            const mod = cache[id]?.exports;
-            if (!mod) continue;
-            for (const key of Object.keys(mod)) {
-                if (/decoration/i.test(key)) {
-                    candidates.push(`module ${id} -> ${key}`);
-                }
-            }
-        } catch {}
-    }
-    log("CANDIDATES:\n" + candidates.join("\n"));
-
-    const guesses = [
-        "getAvatarDecorationURL",
-        "getAvatarDecorationSource",
-        "getDecorationURL",
-        "useAvatarDecoration",
-        "AvatarDecoration",
-    ];
-
-    for (const name of guesses) {
-        const mod = findByProps(name);
-        if (mod && typeof mod[name] === "function") {
-            unpatches.push(
-                before(name, mod, (args) => {
-                    log(`CALLED ${name}: ${JSON.stringify(args)}`);
-                })
-            );
-            log(`patched ${name}`);
-        }
-    }
+    applyLocalDecoration();
 };
 
 export const onUnload = () => {
-    unpatches.forEach((u) => u());
+    const user = UserStore.getCurrentUser();
+    if (user) {
+        user.avatarDecoration = null;
+        user.avatarDecorationData = null;
+        FluxDispatcher.dispatch({ type: "CURRENT_USER_UPDATE", user });
+    }
 };
 
 export const settings = Settings;
