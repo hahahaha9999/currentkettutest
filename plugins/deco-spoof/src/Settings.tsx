@@ -23,6 +23,9 @@ export default () => {
                     storage.customDecoUrl = v;
                 }}
             />
+            <FormText selectable>
+                {storage.debugLog || "(no debug log yet — reload plugin and open a profile with a decoration)"}
+            </FormText>
         </FormSection>
     );
 };
