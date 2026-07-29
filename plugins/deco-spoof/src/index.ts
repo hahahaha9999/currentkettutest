@@ -5,25 +5,46 @@ import Settings from "./Settings";
 
 const unpatches: (() => void)[] = [];
 
-// Discord's user store / avatar decoration hook differs by version;
-// this patches the function that resolves decoration URLs for a user.
-const UserStore = findByProps("getCurrentUser", "getUser");
-const AvatarDecorationModule = findByProps("getAvatarDecorationURL");
-
 export const onLoad = () => {
-    if (!AvatarDecorationModule) return;
+    // Scan all loaded modules for anything decoration-related
+    const candidates: string[] = [];
 
-    unpatches.push(
-        before("getAvatarDecorationURL", AvatarDecorationModule, (args) => {
-            const [{ user }] = args;
-            const me = UserStore.getCurrentUser();
-
-            // Only ever override for yourself, only ever local render
-            if (storage.customDecoUrl && user?.id === me?.id) {
-                return [{ ...args[0], forceReturn: storage.customDecoUrl }];
+    // @ts-ignore - metro internal cache, only for debugging
+    const cache = window.modules ?? {};
+    for (const id in cache) {
+        try {
+            const mod = cache[id]?.exports;
+            if (!mod) continue;
+            for (const key of Object.keys(mod)) {
+                if (/decoration/i.test(key)) {
+                    candidates.push(`module ${id} -> ${key}`);
+                }
             }
-        })
-    );
+        } catch {}
+    }
+
+    console.log("[DecoDebug] candidate decoration-related exports:", candidates);
+
+    // Try a few likely names and patch whichever exist, logging every call
+    const guesses = [
+        "getAvatarDecorationURL",
+        "getAvatarDecorationSource",
+        "getDecorationURL",
+        "useAvatarDecoration",
+        "AvatarDecoration",
+    ];
+
+    for (const name of guesses) {
+        const mod = findByProps(name);
+        if (mod && typeof mod[name] === "function") {
+            unpatches.push(
+                before(name, mod, (args) => {
+                    console.log(`[DecoDebug] ${name} called with:`, JSON.stringify(args));
+                })
+            );
+            console.log(`[DecoDebug] patched ${name}`);
+        }
+    }
 };
 
 export const onUnload = () => {
