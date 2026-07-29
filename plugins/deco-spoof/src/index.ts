@@ -1,37 +1,34 @@
 import { storage } from "@vendetta";
-import { findByStoreName } from "@vendetta/metro";
-import { FluxDispatcher } from "@vendetta/metro/common";
+import { findByName, findByStoreName } from "@vendetta/metro";
+import { before } from "@vendetta/patcher";
+import { React } from "@vendetta/metro/common";
 import Settings from "./Settings";
 
+const unpatches: (() => void)[] = [];
 const UserStore = findByStoreName("UserStore");
 
-function applyLocalDecoration() {
-    const user = UserStore.getCurrentUser();
-    if (!user) return;
-
-    if (storage.customDecoUrl) {
-        // "asset" here is just our own local URL, not a real Discord SKU/asset id
-        user.avatarDecoration = { asset: storage.customDecoUrl, skuId: "local-custom" };
-    } else {
-        user.avatarDecoration = null;
-    }
-    user.avatarDecorationData = user.avatarDecoration;
-
-    // Only touches your own client's rendering of your own user object
-    FluxDispatcher.dispatch({ type: "CURRENT_USER_UPDATE", user });
-}
+// The component that renders the big avatar on the profile popout/screen.
+// Name may need adjusting once we confirm via testing.
+const HeaderAvatar = findByName("HeaderAvatar");
 
 export const onLoad = () => {
-    applyLocalDecoration();
+    if (!HeaderAvatar) return;
+
+    unpatches.push(
+        before("default", HeaderAvatar, (args) => {
+            const [props] = args;
+            const me = UserStore.getCurrentUser();
+
+            // Only overlay on your own avatar, only ever local render
+            if (storage.customDecoUrl && props?.user?.id === me?.id) {
+                props.__localDecoOverlay = storage.customDecoUrl;
+            }
+        })
+    );
 };
 
 export const onUnload = () => {
-    const user = UserStore.getCurrentUser();
-    if (user) {
-        user.avatarDecoration = null;
-        user.avatarDecorationData = null;
-        FluxDispatcher.dispatch({ type: "CURRENT_USER_UPDATE", user });
-    }
+    unpatches.forEach((u) => u());
 };
 
 export const settings = Settings;
