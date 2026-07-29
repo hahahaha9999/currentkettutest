@@ -5,10 +5,15 @@ import Settings from "./Settings";
 
 const unpatches: (() => void)[] = [];
 
-export const onLoad = () => {
-    // Scan all loaded modules for anything decoration-related
-    const candidates: string[] = [];
+function log(line: string) {
+    const existing = storage.debugLog ?? "";
+    storage.debugLog = (existing + "\n" + line).slice(-4000); // keep last ~4000 chars
+}
 
+export const onLoad = () => {
+    storage.debugLog = ""; // reset each load
+
+    const candidates: string[] = [];
     // @ts-ignore - metro internal cache, only for debugging
     const cache = window.modules ?? {};
     for (const id in cache) {
@@ -22,10 +27,8 @@ export const onLoad = () => {
             }
         } catch {}
     }
+    log("CANDIDATES:\n" + candidates.join("\n"));
 
-    console.log("[DecoDebug] candidate decoration-related exports:", candidates);
-
-    // Try a few likely names and patch whichever exist, logging every call
     const guesses = [
         "getAvatarDecorationURL",
         "getAvatarDecorationSource",
@@ -39,10 +42,10 @@ export const onLoad = () => {
         if (mod && typeof mod[name] === "function") {
             unpatches.push(
                 before(name, mod, (args) => {
-                    console.log(`[DecoDebug] ${name} called with:`, JSON.stringify(args));
+                    log(`CALLED ${name}: ${JSON.stringify(args)}`);
                 })
             );
-            console.log(`[DecoDebug] patched ${name}`);
+            log(`patched ${name}`);
         }
     }
 };
