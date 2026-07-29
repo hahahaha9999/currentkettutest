@@ -1,8 +1,18 @@
 import { Forms } from "@vendetta/ui/components";
 import { storage } from "@vendetta";
-import { React } from "@vendetta/metro/common";
+import { findByStoreName } from "@vendetta/metro";
+import { FluxDispatcher, React } from "@vendetta/metro/common";
 
 const { FormSection, FormInput, FormText } = Forms;
+const UserStore = findByStoreName("UserStore");
+
+function apply(url: string) {
+    const user = UserStore.getCurrentUser();
+    if (!user) return;
+    user.avatarDecoration = url ? { asset: url, skuId: "local-custom" } : null;
+    user.avatarDecorationData = user.avatarDecoration;
+    FluxDispatcher.dispatch({ type: "CURRENT_USER_UPDATE", user });
+}
 
 export default () => {
     const [url, setUrl] = React.useState(storage.customDecoUrl ?? "");
@@ -21,11 +31,9 @@ export default () => {
                 onChange={(v: string) => {
                     setUrl(v);
                     storage.customDecoUrl = v;
+                    apply(v);
                 }}
             />
-            <FormText selectable>
-                {storage.debugLog || "(no debug log yet — reload plugin and open a profile with a decoration)"}
-            </FormText>
         </FormSection>
     );
 };
